@@ -6,12 +6,17 @@ import {
   Body,
   Delete,
   Req,
+  Query,
 } from '@nestjs/common';
 import { PlaylistService } from './playlist.service';
+import { SearchService } from 'src/search/search.service';
 
 @Controller('playlists')
 export class PlaylistController {
-  constructor(private readonly playlistService: PlaylistService) {}
+  constructor(
+    private readonly playlistService: PlaylistService,
+    private readonly searchService: SearchService,
+  ) {}
 
   @Post()
   async createPlaylist(@Req() req, @Body('title') title: string) {
@@ -25,6 +30,19 @@ export class PlaylistController {
     @Body() song: { title: string; artist: string; url: string },
   ) {
     return this.playlistService.addSong(id, song);
+  }
+
+  @Post(':id/add_song_from_api')
+  async addSongFromAPI(
+    @Param('id') id: string,
+    @Body('songId') songId: string,
+  ) {
+    return this.playlistService.addSongFromAPI(id, songId);
+  }
+
+  @Get('search_song')
+  async searchSong(@Query('query') query: string) {
+    return this.searchService.searchSong(query);
   }
 
   @Get('user/:userId')
@@ -42,7 +60,6 @@ export class PlaylistController {
     return this.playlistService.removePlaylist(id);
   }
 
-  
   @Delete(':id/remove_song')
   async removeSongFromPlaylist(
     @Param('id') id: string,

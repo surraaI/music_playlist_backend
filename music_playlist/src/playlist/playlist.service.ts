@@ -3,11 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Playlist, PlaylistDocument } from './schemas/playlist.schema';
 import { JwtService } from '@nestjs/jwt';
+import { SearchService } from 'src/search/search.service';
 
 @Injectable()
 export class PlaylistService {
   constructor(
     private readonly jwtService: JwtService,
+    private readonly searchService: SearchService,
     @InjectModel(Playlist.name) private playlistModel: Model<PlaylistDocument>,
   ) {}
 
@@ -51,6 +53,21 @@ export class PlaylistService {
     playlist.songs = playlist.songs.filter(
       (song) => song._id.toString() != songId,
     );
+
+    return playlist.save();
+  }
+  async addSongFromAPI(playlistId: string, songId: string): Promise<Playlist> {
+    const playlist = await this.playlistModel.findById(playlistId);
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+    const songDetails = await this.searchService.searchSongById(songId);
+    playlist.songs.push({
+      _id: new Types.ObjectId(),
+      title: songDetails.title,
+      artist: songDetails.artist.name,
+      url: songDetails.link,
+    });
 
     return playlist.save();
   }

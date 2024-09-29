@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { PlaylistModule } from './playlist/playlist.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { SearchService } from './search/search.service';
 
 @Module({
   imports: [
@@ -21,5 +22,6 @@ import { join } from 'path';
     AuthModule,
     PlaylistModule,
   ],
+  providers: [SearchService],
 })
 export class AppModule {}
