@@ -1,10 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type PlaylistDocument = Playlist & Document;
 
-@Schema()
+@Schema({ _id: true }) 
 export class Song {
+  
+  _id: Types.ObjectId; 
+
   @Prop({ required: true })
   title: string;
 
@@ -12,9 +15,10 @@ export class Song {
   artist: string;
 
   @Prop({ required: true })
-  url: string; 
+  url: string;
 }
 
+export const SongSchema = SchemaFactory.createForClass(Song);
 
 @Schema()
 export class Playlist {
@@ -24,10 +28,10 @@ export class Playlist {
   @Prop()
   description: string;
 
-  @Prop({ type: [Object], default: [] })
-  songs: object[];
+  @Prop({ type: [SongSchema], default: [] })
+  songs: Song[];
 
-  @Prop({ required: true }) // userId is required
+  @Prop({ required: true })
   userId: string;
 }
 

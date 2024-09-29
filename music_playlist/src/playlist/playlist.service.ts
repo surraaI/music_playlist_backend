@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Playlist, PlaylistDocument } from './schemas/playlist.schema';
 import { JwtService } from '@nestjs/jwt';
-
 
 @Injectable()
 export class PlaylistService {
@@ -12,10 +11,10 @@ export class PlaylistService {
     @InjectModel(Playlist.name) private playlistModel: Model<PlaylistDocument>,
   ) {}
 
-  async create(name: string, token: string): Promise<Playlist> {
+  async create(title: string, token: string): Promise<Playlist> {
     const payload = await this.jwtService.decode(token);
     const userId = payload.id;
-    const newPlaylist = new this.playlistModel({ name, userId, songs: [] });
+    const newPlaylist = new this.playlistModel({ title, userId, songs: [] });
     return newPlaylist.save();
   }
 
@@ -27,7 +26,8 @@ export class PlaylistService {
     if (!playlist) {
       throw new NotFoundException('Playlist not found');
     }
-    playlist.songs.push(song);
+    const newSong = { ...song, _id: new Types.ObjectId() };
+    playlist.songs.push(newSong);
     return playlist.save();
   }
 
@@ -41,6 +41,17 @@ export class PlaylistService {
 
   async removePlaylist(id: string): Promise<Playlist> {
     return this.playlistModel.findByIdAndDelete(id).exec();
+  }
 
+  async removeSong(playlistId: string, songId: string): Promise<Playlist> {
+    const playlist = await this.playlistModel.findById(playlistId);
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+    playlist.songs = playlist.songs.filter(
+      (song) => song._id.toString() != songId,
+    );
+
+    return playlist.save();
   }
 }
