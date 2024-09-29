@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Playlist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+        }
+        
+        .upload-form {
+            margin-bottom: 20px;
+        }
+        
+        .music-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .music-item {
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .music-item:hover {
+            background: #e9e9e9;
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Music Playlist</h1>
+
+        <!-- Add Music by URL Form -->
+        <form id="addMusicForm" class="upload-form">
+            <input type="text" id="titleInput" name="title" placeholder="Title" required>
+            <input type="text" id="artistInput" name="artist" placeholder="Artist" required>
+            <input type="text" id="albumInput" name="album" placeholder="Album (optional)">
+            <input type="url" id="urlInput" name="url" placeholder="Music URL" required>
+            <button type="submit">Add Music by URL</button>
+        </form>
+
+        <!-- Music List -->
+        <ul id="musicList" class="music-list"></ul>
+
+        <!-- Audio Player -->
+        <audio id="audioPlayer" controls>
+        <source id="audioSource" src="" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    </div>
+
+    <script>
+        const addMusicForm = document.getElementById('addMusicForm');
+        const titleInput = document.getElementById('titleInput');
+        const artistInput = document.getElementById('artistInput');
+        const albumInput = document.getElementById('albumInput');
+        const urlInput = document.getElementById('urlInput');
+        const musicListElement = document.getElementById('musicList');
+        const audioSource = document.getElementById('audioSource');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        const API_URL = 'http://localhost:3000'; // Update this with your backend URL
+
+        // Handle Form Submission to Add Music by URL
+        addMusicForm.addEventListener('submit', async(event) => {
+            event.preventDefault();
+
+            const musicData = {
+                title: titleInput.value,
+                artist: artistInput.value,
+                album: albumInput.value,
+                url: urlInput.value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/music/add-by-url`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(musicData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add music');
+                }
+
+                // Reset the form and refresh the music list
+                addMusicForm.reset();
+                loadMusicList();
+                alert('Music added successfully!');
+            } catch (error) {
+                console.error('Error adding music:', error);
+                alert('Error adding music. Please try again.');
+            }
+        });
+
+        // Fetch and Display the List of Added Music
+        async function loadMusicList() {
+            try {
+                const response = await fetch(`${API_URL}/music`);
+                const musicList = await response.json();
+                renderMusicList(musicList);
+            } catch (error) {
+                console.error('Error loading music list:', error);
+                alert('Error loading music list. Please try again.');
+            }
+        }
+
+        // Render the Music List
+        function renderMusicList(musicList) {
+            musicListElement.innerHTML = ''; // Clear existing list
+
+            musicList.forEach((music) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'music-item';
+                listItem.textContent = `${music.title} by ${music.artist}`;
+                listItem.onclick = () => playMusic(music.url);
+                musicListElement.appendChild(listItem);
+            });
+        }
+
+        // Play Selected Music
+        function playMusic(url) {
+            audioSource.src = `${url}`;
+            audioPlayer.load(); // Reload the audio player with the new source
+            audioPlayer.play(); // Play the audio
+        }
+
+        // Load the Music List on Page Load
+        loadMusicList();
+    </script>
+
+</body>
+
+</html>
